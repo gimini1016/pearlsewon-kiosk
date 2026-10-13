@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "framework": null,
+  "buildCommand": "python3 build.py",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/*.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{screenshots/**,templates/**,dist/**,test_*.py,*-check.mjs,app-check.js,requirements.md}"
+    }
+  }
+}

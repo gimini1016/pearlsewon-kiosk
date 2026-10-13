@@ -1,0 +1,120 @@
+{
+  "queue_drinks": 5,
+  "wait_minutes": 2,
+  "sold_out": [
+    {
+      "id": "mango_smoothie",
+      "name": "망고 스무디"
+    }
+  ],
+  "seats_free": 7,
+  "seats_total": 13,
+  "pearl_minutes_ago": 12,
+  "updated_at": 1791838693,
+  "seats": [
+    {
+      "id": "W1",
+      "label": "창가 1인석 W1",
+      "capacity": 1,
+      "outlet": true,
+      "window": true,
+      "status": "taken"
+    },
+    {
+      "id": "W2",
+      "label": "창가 1인석 W2",
+      "capacity": 1,
+      "outlet": true,
+      "window": true,
+      "status": "free"
+    },
+    {
+      "id": "W3",
+      "label": "창가 1인석 W3",
+      "capacity": 1,
+      "outlet": true,
+      "window": true,
+      "status": "taken"
+    },
+    {
+      "id": "W4",
+      "label": "창가 1인석 W4",
+      "capacity": 1,
+      "outlet": true,
+      "window": true,
+      "status": "free"
+    },
+    {
+      "id": "T1",
+      "label": "2인 테이블 T1",
+      "capacity": 2,
+      "outlet": true,
+      "window": false,
+      "status": "taken"
+    },
+    {
+      "id": "T2",
+      "label": "2인 테이블 T2",
+      "capacity": 2,
+      "outlet": true,
+      "window": false,
+      "status": "free"
+    },
+    {
+      "id": "T3",
+      "label": "2인 테이블 T3",
+      "capacity": 2,
+      "outlet": true,
+      "window": false,
+      "status": "taken"
+    },
+    {
+      "id": "T4",
+      "label": "2인 테이블 T4",
+      "capacity": 2,
+      "outlet": false,
+      "window": false,
+      "status": "free"
+    },
+    {
+      "id": "T5",
+      "label": "2인 테이블 T5",
+      "capacity": 2,
+      "outlet": false,
+      "window": false,
+      "status": "free"
+    },
+    {
+      "id": "T6",
+      "label": "2인 테이블 T6",
+      "capacity": 2,
+      "outlet": false,
+      "window": false,
+      "status": "free"
+    },
+    {
+      "id": "F1",
+      "label": "4인 테이블 F1",
+      "capacity": 4,
+      "outlet": false,
+      "window": true,
+      "status": "taken"
+    },
+    {
+      "id": "F2",
+      "label": "4인 테이블 F2",
+      "capacity": 4,
+      "outlet": false,
+      "window": false,
+      "status": "taken"
+    },
+    {
+      "id": "F3",
+      "label": "4인 테이블 F3",
+      "capacity": 4,
+      "outlet": false,
+      "window": false,
+      "status": "free"
+    }
+  ]
+}

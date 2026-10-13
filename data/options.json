@@ -1,0 +1,437 @@
+{
+  "_note": "menu.json을 보완하는 옵션 규칙. menu.json은 그대로 두고 이 파일을 함께 읽어요. price_assumed=true인 값은 팀이 정한 가정값이라 확인이 필요해요.",
+  "sugar": {
+    "levels": [
+      0,
+      30,
+      50,
+      70,
+      100
+    ],
+    "default": 70,
+    "categories": [
+      "밀크티",
+      "티·과일",
+      "스무디·요거트"
+    ],
+    "overrides": {
+      "brownsugar_milktea_pearl": {
+        "levels": [],
+        "why": "흑당 때문에 당도 조절은 안 돼요"
+      },
+      "lowsugar_black_milktea": {
+        "levels": [],
+        "why": "저당으로 고정돼 있어요"
+      }
+    }
+  },
+  "ice": {
+    "levels": [
+      "적게",
+      "보통",
+      "많이"
+    ],
+    "default": "보통",
+    "only_temperature": "ICE",
+    "not_categories": [
+      "스무디·요거트"
+    ],
+    "why_not": "스무디·요거트는 얼음을 갈아 만들어서 얼음 양을 못 바꿔요"
+  },
+  "extras": [
+    {
+      "id": "shot",
+      "name": "샷 추가",
+      "price": 600,
+      "price_assumed": true,
+      "max": 2,
+      "categories": [
+        "커피"
+      ]
+    },
+    {
+      "id": "decaf",
+      "name": "디카페인으로",
+      "price": 300,
+      "price_assumed": true,
+      "max": 1,
+      "categories": [
+        "커피"
+      ]
+    },
+    {
+      "id": "syrup_vanilla",
+      "name": "바닐라 시럽 추가",
+      "price": 500,
+      "price_assumed": true,
+      "max": 1,
+      "categories": [
+        "커피",
+        "밀크티"
+      ]
+    },
+    {
+      "id": "syrup_hazelnut",
+      "name": "헤이즐넛 시럽 추가",
+      "price": 500,
+      "price_assumed": true,
+      "max": 1,
+      "categories": [
+        "커피",
+        "밀크티"
+      ]
+    },
+    {
+      "id": "syrup_caramel",
+      "name": "카라멜 시럽 추가",
+      "price": 500,
+      "price_assumed": true,
+      "max": 1,
+      "categories": [
+        "커피",
+        "밀크티"
+      ]
+    },
+    {
+      "id": "oat_milk",
+      "name": "오트밀크로 변경",
+      "price": 600,
+      "price_assumed": true,
+      "max": 1,
+      "categories": [
+        "커피",
+        "밀크티"
+      ],
+      "requires_allergen": "우유"
+    }
+  ],
+  "toppings": {
+    "price_from": "menu.json의 toppings",
+    "categories": [
+      "밀크티",
+      "티·과일",
+      "스무디·요거트"
+    ],
+    "max_per_drink": 3,
+    "included": {
+      "black_milktea_pearl": [
+        "펄"
+      ],
+      "taro_milktea_pearl": [
+        "펄"
+      ],
+      "brownsugar_milktea_pearl": [
+        "펄"
+      ],
+      "choco_milktea_cheesefoam": [
+        "치즈폼"
+      ],
+      "oolong_coconut_milkfoam": [
+        "코코넛",
+        "밀크폼"
+      ],
+      "mango_yogurt_whitepearl": [
+        "화이트펄"
+      ]
+    },
+    "remove_included": "뺄 수 있어요. 가격은 그대로예요."
+  },
+  "rules": [
+    {
+      "id": "dessert_no_option",
+      "when": "category == 디저트",
+      "msg": "디저트는 옵션 없이 그대로 나가요."
+    },
+    {
+      "id": "size_from_prices",
+      "when": "선택한 사이즈가 prices에 없음",
+      "msg": "이 메뉴는 중 사이즈 하나만 있어요."
+    },
+    {
+      "id": "temp_from_menu",
+      "when": "선택한 온도가 temperatures에 없음",
+      "msg": "이 메뉴는 ICE로만 나와요."
+    },
+    {
+      "id": "hot_no_ice",
+      "when": "HOT인데 얼음 옵션",
+      "msg": "따뜻한 음료라 얼음은 안 들어가요."
+    },
+    {
+      "id": "smoothie_no_ice",
+      "when": "스무디·요거트에 얼음 옵션",
+      "msg": "스무디는 얼음을 갈아 만들어서 얼음 양은 못 바꿔요."
+    },
+    {
+      "id": "no_sugar_option",
+      "when": "sugar.categories 밖의 메뉴에 당도",
+      "msg": "이 메뉴는 당도를 못 바꿔요. 달게 드시려면 시럽을 추가할 수 있어요."
+    },
+    {
+      "id": "sugar_fixed",
+      "when": "sugar.overrides에서 levels가 빈 메뉴에 당도",
+      "msg": "이 메뉴는 당도가 정해져 있어요. 덜 단 걸 원하시면 저당 블랙 밀크티를 추천해요."
+    },
+    {
+      "id": "coffee_only",
+      "when": "커피가 아닌 메뉴에 샷 추가·디카페인",
+      "msg": "샷 추가와 디카페인은 커피 메뉴만 돼요."
+    },
+    {
+      "id": "syrup_scope",
+      "when": "커피·밀크티가 아닌 메뉴에 시럽",
+      "msg": "시럽은 커피와 밀크티에만 넣을 수 있어요."
+    },
+    {
+      "id": "oat_needs_milk",
+      "when": "우유가 안 들어간 메뉴에 오트밀크",
+      "msg": "이 메뉴엔 우유가 안 들어가서 바꿀 게 없어요."
+    },
+    {
+      "id": "oat_foam_milk",
+      "when": "오트밀크로 바꿨는데 밀크폼·치즈폼이 있음",
+      "msg": "오트밀크로 바꿔도 폼에는 우유가 들어 있어요."
+    },
+    {
+      "id": "topping_scope",
+      "when": "커피·디저트에 토핑",
+      "msg": "토핑은 밀크티, 티·과일, 스무디·요거트에만 올라가요."
+    },
+    {
+      "id": "topping_max",
+      "when": "토핑이 3개 넘음",
+      "msg": "토핑은 한 잔에 3개까지예요."
+    },
+    {
+      "id": "sold_out",
+      "when": "sold_out == true",
+      "msg": "지금 품절이에요. 비슷한 메뉴를 골라 드릴까요?"
+    }
+  ],
+  "taste_categories": {
+    "_note": "맛 고르기 범주 4개(P3). 한 메뉴가 여러 범주에 들 수 있어요. 디저트는 범주 없이 음료와 함께 추천해요.",
+    "rules": {
+      "달달": "단맛 4 이상",
+      "상큼": "신맛 3 이상",
+      "진한": "진함 4 이상, 또는 우유 없이 진함 3 이상",
+      "부드러운": "우유가 들어가고 진함·단맛 3 이하, 신맛 2 이하"
+    },
+    "less_sweet": "‘안 달게’는 범주가 아니라 함께 받는 조건이에요. 당도를 바꿀 수 있는 메뉴는 추천 세트 당도를 sugar_less_sweet로 내리고, 당도가 고정된 메뉴는 단맛 2 이하만 후보로 둬요(저당 블랙 밀크티 포함)."
+  },
+  "menu_defaults": {
+    "_note": "추천 세트(P5). 손님에게 이대로 한 번에 보여 주고 바꿀 것만 받아요. 팀이 메뉴별로 고쳐도 돼요.",
+    "americano": {
+      "taste_categories": [
+        "진한"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "cafe_latte": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "vanilla_latte": {
+      "taste_categories": [
+        "달달"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "cappuccino": {
+      "taste_categories": [
+        "진한"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "cafe_mocha": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "earlgrey_spanner": {
+      "taste_categories": [
+        "진한"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "black_milktea_pearl": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통",
+      "toppings": [
+        "펄"
+      ]
+    },
+    "taro_milktea_pearl": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통",
+      "toppings": [
+        "펄"
+      ]
+    },
+    "brownsugar_milktea_pearl": {
+      "taste_categories": [
+        "달달"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통",
+      "toppings": [
+        "펄"
+      ]
+    },
+    "green_milktea": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통"
+    },
+    "choco_milktea_cheesefoam": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통",
+      "toppings": [
+        "치즈폼"
+      ]
+    },
+    "lowsugar_black_milktea": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "ice": "보통"
+    },
+    "earlgrey_tea": {
+      "taste_categories": [
+        "진한"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통"
+    },
+    "oolong_coconut_milkfoam": {
+      "taste_categories": [
+        "부드러운"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통",
+      "toppings": [
+        "코코넛",
+        "밀크폼"
+      ]
+    },
+    "grapefruit_jasmine": {
+      "taste_categories": [
+        "상큼"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통"
+    },
+    "passionfruit_hibiscus": {
+      "taste_categories": [
+        "상큼"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30,
+      "ice": "보통"
+    },
+    "lemon_yogurt": {
+      "taste_categories": [
+        "상큼"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 70,
+      "sugar_less_sweet": 30
+    },
+    "mango_yogurt_whitepearl": {
+      "taste_categories": [
+        "달달"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 50,
+      "sugar_less_sweet": 30,
+      "toppings": [
+        "화이트펄"
+      ]
+    },
+    "strawberry_cookie_smoothie": {
+      "taste_categories": [
+        "달달"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 50,
+      "sugar_less_sweet": 30
+    },
+    "mango_smoothie": {
+      "taste_categories": [
+        "달달"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 50,
+      "sugar_less_sweet": 30
+    },
+    "greengrape_smoothie": {
+      "taste_categories": [
+        "달달"
+      ],
+      "size": "중",
+      "temp": "ICE",
+      "sugar": 50,
+      "sugar_less_sweet": 30
+    },
+    "signature_scone": {},
+    "chocochip_cookie": {},
+    "salted_cheese_bar": {},
+    "cheesecake_stick": {},
+    "milktea_crepe": {}
+  }
+}

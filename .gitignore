@@ -1,0 +1,13 @@
+screenshots/
+verification.json
+__pycache__/
+.DS_Store
+app-check.js
+.env
+.env.*
+!.env.example
+ai-verification.json
+.vercel/
+.openai/
+.sites-runtime/
+node_modules/
