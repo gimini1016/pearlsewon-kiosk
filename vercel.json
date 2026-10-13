@@ -7,7 +7,7 @@
   "functions": {
     "api/*.py": {
       "maxDuration": 60,
-      "excludeFiles": "{screenshots/**,templates/**,dist/**,test_*.py,*-check.mjs,app-check.js,requirements.md}"
+      "excludeFiles": "{screenshots/**,templates/**,dist/**,test_*.py,*-check.mjs,app-check.js,requirements.md,.env*,.openai/**,.vercel/**,.vercel_python_packages/**,.git/**,verification.json,ai-verification.json}"
     }
   }
 }
