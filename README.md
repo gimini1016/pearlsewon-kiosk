@@ -1,5 +1,7 @@
 # 펄세권 키오스크 프로토타입
 
+소스 저장소: [gimini1016/pearlsewon-kiosk](https://github.com/gimini1016/pearlsewon-kiosk) · 비공개
+
 실제 AI 채팅을 쓰려면 `run.command`를 실행하거나 터미널에서 이 폴더로 이동해 `python3 server.py --open`을 실행합니다. 브라우저에서 `http://127.0.0.1:8765`를 열면 됩니다. 별도 패키지 설치 없이 Python 3로 실행합니다.
 
 서버는 현재 환경에서 `/Users/yangjimin/Documents/생성형ai/펄세권/.env`의 `OPENAI_API_KEY`를 읽습니다. 키를 HTML이나 소스 ZIP에 복사하지 않습니다. 다른 기기에서는 이 폴더에 `.env`를 만들거나 `PEARL_ENV_FILE`에 사용할 설정 파일 경로를 지정합니다. 기본 모델은 `gpt-4.1-mini`이고 `OPENAI_MODEL`로 변경할 수 있습니다.
