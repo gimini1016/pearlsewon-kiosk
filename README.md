@@ -1,6 +1,6 @@
 # 펄세권 키오스크 프로토타입
 
-소스 저장소: [gimini1016/pearlsewon-kiosk](https://github.com/gimini1016/pearlsewon-kiosk) · 비공개
+소스 저장소: [gimini1016/pearlsewon-kiosk](https://github.com/gimini1016/pearlsewon-kiosk) · 공개
 
 배포 주소: [pearlsewon-kiosk.vercel.app](https://pearlsewon-kiosk.vercel.app)
 
