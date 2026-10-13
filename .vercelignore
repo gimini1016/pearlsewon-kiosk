@@ -13,6 +13,7 @@ app-check.js
 .env.*
 !.env.example
 node_modules
+.vercel_python_packages
 *-check.mjs
 test_server.py
 test_hosted.py

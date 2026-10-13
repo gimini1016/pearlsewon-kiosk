@@ -10,6 +10,7 @@ ai-verification.json
 .openai/
 .sites-runtime/
 node_modules/
+.vercel_python_packages/
 .vercel
 .env*
 !.env.example
