@@ -5,7 +5,6 @@ __pycache__/
 app-check.js
 .env
 .env.*
-!.env.example
 ai-verification.json
 .vercel/
 .openai/
@@ -13,3 +12,4 @@ ai-verification.json
 node_modules/
 .vercel
 .env*
+!.env.example
