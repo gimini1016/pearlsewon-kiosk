@@ -10,6 +10,8 @@ const catOf = i => ((DEF[i.id] && DEF[i.id].taste_categories) || [])[0];
 const color = c => `var(${CAT[c][0]})`;
 const milk = i => i.allergens.includes('우유');
 const caf = i => i.caffeine_mg || 0;
+// 카페인 숫자는 알아듣는 말로: 아메리카노(129mg) 한 잔을 기준으로 견준다
+const cafWords = i => { const mg = caf(i), r = mg / 129; if (!mg) return '카페인 없어요'; const w = r < .3 ? '조금' : r < .45 ? '아메리카노 1/3잔쯤' : r < .65 ? '아메리카노 반 잔쯤' : r < .85 ? '아메리카노 2/3잔쯤' : r < 1.2 ? '아메리카노 한 잔쯤' : '아메리카노 한 잔보다 많게'; return `카페인 ${w}(${mg}mg)`; };
 const rule = id => O.rules.find(x => x.id === id).msg;
 
 function rag() {}
@@ -42,18 +44,19 @@ function reset() {
 }
 
 function sugarAdjustable(i) { const o = O.sugar.overrides[i.id]; return O.sugar.categories.includes(i.category) && !(o && o.levels.length === 0); }
-const lessOk = i => sugarAdjustable(i) || i.taste['단맛'] <= 2;
+const lessOk = i => i.taste['단맛'] <= 2;
 function buildPool() {
   let p = drinks.filter(i => !i.sold_out);
   if (S.situ) p = p.filter(SITU[S.situ].pick);
   if (S.cat) p = p.filter(i => catOf(i) === S.cat);
   if (S.less) p = p.filter(lessOk);
+  if (S.nomilk) p = p.filter(i => !milk(i));
   const rank = i => (['베스트', '시그니처'].includes(i.badge) ? 0 : i.badge ? 1 : 2);
   return p.sort((a, b) => (S.less ? a.taste['단맛'] - b.taste['단맛'] : 0) || rank(a) - rank(b));
 }
 const firstSitu = i => D.situ[i.id].split(',')[0];
 function reason(i) {
-  if (S.situ === '운동 직전' || S.situ === '졸릴 때·밤샘 공부') return `카페인 ${caf(i)}mg · ${firstSitu(i)}`;
+  if (S.situ === '운동 직전' || S.situ === '졸릴 때·밤샘 공부') return `${cafWords(i)} · ${firstSitu(i)}`;
   if (S.situ === '저녁·잠들기 전') return `카페인 없어요 · ${firstSitu(i)}`;
   if (S.situ === '우유를 피해야 할 때') return `우유가 안 들어가요 · ${firstSitu(i)}`;
   return firstSitu(i);
@@ -117,13 +120,13 @@ function drawMap(focus, mini) {
   for (let k = 0; k <= 5; k++) { const v = P0 + k / 5 * SPAN; s += `<line class="gl" x1="${v}" y1="${P0}" x2="${v}" y2="${P0 + SPAN}"/><line class="gl" x1="${P0}" y1="${v}" x2="${P0 + SPAN}" y2="${v}"/>`; }
   const c = P0 + SPAN / 2;
   s += `<rect class="frame" x="${P0}" y="${P0}" width="${SPAN}" height="${SPAN}"/><line class="ax" x1="${c}" y1="${P0 + 6}" x2="${c}" y2="${P0 + SPAN - 6}"/><line class="ax" x1="${P0 + 6}" y1="${c}" x2="${P0 + SPAN - 6}" y2="${c}"/>`;
-  s += `<text class="axl" x="${c}" y="22" text-anchor="middle">진한</text><text class="axl" x="${c}" y="308" text-anchor="middle">가벼운</text><text class="axl" x="16" y="${c}" text-anchor="middle">덜 단</text><text class="axl" x="304" y="${c}" text-anchor="middle">달달</text>`;
+  s += `<text class="axl" x="${c}" y="24" text-anchor="middle">진한</text><text class="axl" x="${c}" y="316" text-anchor="middle">가벼운</text><text class="axl" x="29" y="${c + 6}" text-anchor="end">덜 단</text><text class="axl" x="291" y="${c + 6}" text-anchor="start">달달</text>`;
   if (S.less) { const lx = P0 + 2 / 5 * SPAN; s += `<rect x="${P0}" y="${P0}" width="${lx - P0}" height="${SPAN}" fill="var(--mark)" opacity=".06"/><line x1="${lx}" y1="${P0}" x2="${lx}" y2="${P0 + SPAN}" stroke="var(--mark)" stroke-dasharray="3 3"/>`; }
   // 이름표 대신: 고른 맛은 반짝이는 펄, 후보는 번호 펄(카드 번호와 같아요)
   list.forEach(i => { const [x, y] = pos[i.id], on = focus.includes(i.id); if (mini && on) return; s += `<circle class="${on ? '' : 'dim'}" cx="${x}" cy="${y}" r="${on ? 7 : 5.5}" fill="${color(catOf(i))}"/>` + (on ? `<circle cx="${x - 2.2}" cy="${y - 2.2}" r="1.8" fill="var(--screen)" opacity=".75"/>` : ''); });
   if (mini) focus.forEach((id, n) => { const [x, y] = pos[id]; s += `<circle cx="${x}" cy="${y}" r="11" fill="${color(catOf(byId[id]))}" stroke="var(--screen)" stroke-width="2"/><text class="no" x="${x}" y="${y + 4}" text-anchor="middle">${n + 1}</text>`; });
   const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  el.setAttribute('viewBox', '0 0 320 320'); el.setAttribute('class', 'map'); el.setAttribute('role', 'img'); el.setAttribute('aria-label', '가로는 단맛, 세로는 진함인 메뉴 맛 지도');
+  el.setAttribute('viewBox', '-34 0 388 324'); el.setAttribute('class', 'map'); el.setAttribute('role', 'img'); el.setAttribute('aria-label', '가로는 단맛, 세로는 진함인 메뉴 맛 지도');
   el.innerHTML = s;
   // SVG 높이를 브라우저마다 다르게 잡지 않도록 정사각형 상자에 넣어요
   const wrap = box('mapbox'); wrap.append(el); return wrap;
@@ -155,7 +158,7 @@ function legacyPicks() {
   else r.append(btn('ghost', '베스트로 할게요', () => { decide(); choose(byId['black_milktea_pearl']); }));
   r.append(btn('ghost', '전체 보기', () => { decide(); S.stage = 'full'; show(); }));
   B.append(r);
-  rag([...(S.situ ? [`<em>[상황]</em> ${S.situ}`] : []), ...(S.cat ? [`<em>필터</em> 맛 범주 = ${S.cat}`] : []), ...(S.less ? ['<em>필터</em> 당도 조절 가능하거나 단맛 2 이하'] : []), ...p.map(i => `<em>[메뉴]</em> ${i.name} · 어울리는 상황: ${D.situ[i.id]}`)]);
+  rag([...(S.situ ? [`<em>[상황]</em> ${S.situ}`] : []), ...(S.cat ? [`<em>필터</em> 맛 범주 = ${S.cat}`] : []), ...(S.less ? ['<em>필터</em> 단맛 2 이하'] : []), ...p.map(i => `<em>[메뉴]</em> ${i.name} · 어울리는 상황: ${D.situ[i.id]}`)]);
 }
 function legacyFull() {
   say('전체 메뉴를 맛별로 묶었어요.');

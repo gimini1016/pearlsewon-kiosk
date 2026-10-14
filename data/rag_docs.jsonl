@@ -53,3 +53,4 @@
 {"page_content": "[매장 정책] 포장\n포장은 실링 또는 뚜껑으로 드려요. 2잔 이상이면 캐리어에 담아 드려요.", "metadata": {"id": "policy_포장", "type": "policy", "source": "가상 정책(팀 결정)"}}
 {"page_content": "[매장 정책] 매장 이용\n매장에서 드시면 다회용 컵으로 드려요. 콘센트 자리는 창가 1인석과 2인 테이블에 있어요.", "metadata": {"id": "policy_매장 이용", "type": "policy", "source": "가상 정책(팀 결정)"}}
 {"page_content": "[매장 정책] 직원 호출\n키오스크로 해결이 어려우면 ‘직원 불러 주세요’라고 말씀해 주세요. 직원이 바로 와요.", "metadata": {"id": "policy_직원 호출", "type": "policy", "source": "가상 정책(팀 결정)"}}
+{"page_content": "[매장] 펄 신선도 (펄 언제 삶았어요?)\n펄은 30분마다 새로 삶아요. 지금 펄을 삶은 지 몇 분 됐는지는 매장 상태에 나와요.", "metadata": {"id": "store_펄 신선도", "type": "store", "source": "가상 정책(팀 결정)"}}

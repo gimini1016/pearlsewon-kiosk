@@ -10,3 +10,7 @@ artifacts/
 .openai/
 .sites-runtime/
 node_modules/
+
+.impeccable/review/
+.impeccable/*.json
+!.impeccable/design.json

@@ -1,5 +1,6 @@
 """Combine frontend sources and supplied data into a standalone kiosk page."""
 import json
+import shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,6 +40,8 @@ def build():
     (ROOT / 'dist').mkdir(exist_ok=True)
     (ROOT / 'artifacts').mkdir(exist_ok=True)
     (ROOT / 'dist/index.html').write_text(html, encoding='utf-8')
+    # 발표장 네트워크에 기대지 않도록 글꼴을 함께 내보낸다
+    shutil.copytree(FRONTEND / 'fonts', ROOT / 'dist/fonts', dirs_exist_ok=True)
     (ROOT / 'artifacts/app.js').write_text(script, encoding='utf-8')
     print('프로토타입 생성 완료:', len(menu['items']), '개 메뉴,', len(menu['toppings']), '개 토핑,', len(options['extras']), '개 추가 옵션')
 

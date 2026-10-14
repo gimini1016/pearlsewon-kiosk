@@ -16,25 +16,26 @@ function hear(text){const t=text.trim();if(!t)return;if(aiMode==='rules')return 
 async function liveHear(text){
   await aiReady;
   if(aiPending)return;
-  if(aiMode!=='live'){appendMessage('user',text);say('AI 서버에 연결하지 못했어요. 서버를 실행한 뒤 다시 열어 주세요.');appendMessage('bot',$('#m').textContent);$('#conversation').open=true;return;}
+  if(aiMode!=='live'){appendMessage('user',text);appendMessage('bot','AI 서버에 연결하지 못했어요. 서버를 실행한 뒤 다시 열어 주세요.');revealChat();return;}
   const epoch=aiEpoch;
   const conversation=messages.slice(-10);
-  const state={stage:S.stage,where:S.where,item_id:S.item?.id||null,cfg:S.cfg?clone(S.cfg):null,paid:S.paid};
-  appendMessage('user',text);$('#conversation').open=true;aiPending=true;aiAbort=new AbortController();
+  const visible=S.stage==='picks'?S.pool.slice(S.page*3,S.page*3+3).map(i=>i.id):S.stage==='offer'?[...S.offer]:[];
+  const state={stage:S.stage,where:S.where,item_id:S.item?.id||null,cfg:S.cfg?clone(S.cfg):null,paid:S.paid,seats_free:D.seats,queue_drinks:D.store.queue_drinks,pearl_minutes_ago:pearlMin(),visible,cart:S.cart.map(l=>({menu_id:l.i.id,quantity:l.qty}))};
+  appendMessage('user',text);aiPending=true;renderMessages();revealChat();aiAbort=new AbortController();
   const timeout=setTimeout(()=>aiAbort?.abort(),55000);
-  B.inert=true;$('#f button').disabled=true;$('#in').disabled=true;$('#back').disabled=true;updateAIStatus();
+  B.inert=true;$('#f button').disabled=true;$('#in').disabled=true;$('#back').disabled=true;$('#cartBtn').disabled=true;updateAIStatus();
   try{
     const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,state,conversation}),signal:aiAbort.signal});
     const action=await response.json();
     if(epoch!==aiEpoch)return;
     if(!response.ok)throw new Error(action.error||'AI 응답을 받지 못했어요.');
-    applyAIAction(action,text);
-    say(action.reply,action.warnings||[]);
-    appendMessage('bot',[action.reply,...(action.warnings||[])].join('\n'));
+    // 답은 대화창에만. 화면이 바뀌며 생기는 안내 문장도 판 위가 아니라 대화로 흘린다
+    chatTurn=[];try{applyAIAction(action,text);}finally{chatTurn=null;}
+    appendMessage('bot',[action.reply,...(action.warnings||[])].filter(Boolean).join('\n'));
   }catch(error){
     if(epoch!==aiEpoch)return;
     const message=error.name==='AbortError'?'응답이 늦어지고 있어요. 잠시 뒤 다시 시도해 주세요.':error.message;
-    say(message);appendMessage('bot',message);$('#in').value=text;
+    appendMessage('bot',message);$('#in').value=text;
   }finally{
     clearTimeout(timeout);
     if(epoch===aiEpoch){aiPending=false;aiAbort=null;B.inert=false;$('#f button').disabled=false;$('#in').disabled=false;memo();updateAIStatus();renderMessages();}
@@ -43,10 +44,14 @@ async function liveHear(text){
 function applyAIAction(action,text){
   if(!S.paid&&['매장','포장'].includes(action.fulfillment))S.where=action.fulfillment;
   if(action.intent==='staff'){staff();return;}
+  if(action.intent==='sold_out'){if(!S.where)S.where='포장';offerMenus(action.recommendations||[],'',action.menu_id);return;}
+  if(action.intent==='unknown')return; // 한마디 하고(대화창) 지금 화면에서 주문을 이어 간다
+  // 답에서 권한 메뉴는 화면에도 카드로 보여 줘서 답과 화면이 어긋나지 않게 한다
+  if(action.intent==='reply'&&action.suggestions?.length){if(!S.where)S.where='포장';offerMenus(action.suggestions,action.title||'');return;}
   if(action.intent==='recommend'){
     const pool=(action.recommendations||[]).map(id=>byId[id]).filter(i=>i&&!i.sold_out);
     if(!pool.length)return;
-    if(!S.where)S.where='포장';S.pool=pool;S.cat=null;S.situ=null;S.less=LESS_RE.test(text);S.page=0;S.rerolls=0;S.stage='picks';show();return;
+    if(!S.where)S.where='포장';S.pool=pool;S.cat=null;S.situ=null;S.less=LESS_RE.test(text);S.from='chat';S.page=0;S.rerolls=0;S.stage='picks';show();return;
   }
   if(action.intent==='modify'){
     const record=action.items?.[0];if(!record||record.menu_id!==S.item?.id)return;
