@@ -41,7 +41,7 @@ function memo(){ $('#sn').textContent=({where:'취향대로, 한 잔',fork:'메�
 function snapshot(){return {stage:S.stage,where:S.where,cat:S.cat,situ:S.situ,less:S.less,pool:S.pool.map(i=>i.id),page:S.page,rerolls:S.rerolls,item:S.item?.id||null,cfg:S.cfg?clone(S.cfg):null};}
 function show(){if(currentStage!==null&&currentStage!==S.stage&&lastSnapshot)historyStack.push(lastSnapshot);currentStage=S.stage;B.innerHTML='';B.scrollTop=0;memo();({where,fork,order,taste,picks,full,cup,cart,pay,notify,done})[S.stage]();lastSnapshot=snapshot();renderMessages();}
 function goBack(){if($('#dialog').open){$('#dialog').close();return;}if(S.paid||!historyStack.length)return;const p=historyStack.pop();const cartNow=S.cart;Object.assign(S,p,{pool:p.pool.map(id=>byId[id]),item:p.item?byId[p.item]:null,cart:cartNow});currentStage=S.stage;lastSnapshot=null;if(S.stage==='cup'){const k=S.cart.length-1;editIndex=k>=0&&S.cart[k].i.id===S.item.id?k:null;}show();}
-function reset(){S={stage:'where',where:null,cat:null,situ:null,less:false,pool:[],page:0,rerolls:0,item:null,cfg:null,cart:[],dec:0,paid:false,phone:null,maskedPhone:null,number:null,payment:null};messages=[];historyStack=[];currentStage=null;lastSnapshot=null;editIndex=null;draftCache.clear();if($('#dialog').open)$('#dialog').close();$('#in').value='';$('#conversation').open=false;show();appendMessage('bot','안녕하세요, 펄세권이에요. 매장에서 드세요, 포장하세요?');}
+function rulesReset(){S={stage:'where',where:null,cat:null,situ:null,less:false,pool:[],page:0,rerolls:0,item:null,cfg:null,cart:[],dec:0,paid:false,phone:null,maskedPhone:null,number:null,payment:null};messages=[];historyStack=[];currentStage=null;lastSnapshot=null;editIndex=null;draftCache.clear();if($('#dialog').open)$('#dialog').close();$('#in').value='';$('#conversation').open=false;show();appendMessage('bot','안녕하세요, 펄세권이에요. 매장에서 드세요, 포장하세요?');}
 function where(){say('매장에서 드세요, 포장하세요?');B.append(box('eyebrow','A LITTLE PEARL, A GOOD DAY'));const art=box('welcome-art',drinkSvg(byId.taro_milktea_pearl)+drinkSvg(byId.black_milktea_pearl)+drinkSvg(byId.passionfruit_hibiscus));B.append(art,box('welcome-note','<b>맛만 고르세요.</b><br>어울리는 조합을 준비해 드릴게요.'));const r=box('row2');for(const x of ['매장','포장'])r.append(btn('big'+(x==='포장'?' pri':''),`<b>${x}</b><span>${x==='매장'?'현재 빈자리 '+D.seats+'석':'들고 가기 편하게'}</span>`,()=>{S.where=x;S.stage='fork';show();}));B.append(r);}
 function fork(){say('메뉴 정하셨어요?');B.append(btn('big','<b>정했어요</b><span>메뉴를 보거나, 이름을 알려 주세요.</span>',()=>{S.stage='full';show();}),btn('big pri','<b>아직이요</b><span>좋아하는 맛부터 골라 볼까요?</span>',()=>{S.stage='taste';show();}),box('hint',`앞에 음료 ${D.store.queue_drinks}잔이 있어요. 예상 대기 ${D.wait}분부터.`));}
 const baseTaste=legacyTaste,basePicks=legacyPicks,baseFull=legacyFull;
@@ -94,7 +94,7 @@ function applyText(i,c,text,msgs){
 }
 const OPTION_REQUEST=/사이즈|얼음|당도|덜\s*달|안\s*달|따뜻|차갑|아이스|\bHOT\b|\bICE\b|샷|오트|시럽|디카페인|뚜껑|실링|(?:펄|폼|코코넛|알로에)(?:을|은|도)?\s*(추가|넣|빼|제거|없이)/i;
 function cfgSummary(i,c){return [i.name,c.size,c.temp,c.sugar!==null?'당도 '+c.sugar+'%':null,c.ice?'얼음 '+c.ice:null,...c.tops,c.syrup?extra(c.syrup).name:null,c.oat?'오트밀크':null,c.shot?'샷 '+c.shot+'회':null,c.decaf?'디카페인':null].filter(Boolean).join(' · ');}
-function hear(text){const t=text.trim();if(!t)return;appendMessage('user',t);try{handleMessage(t);}catch(error){console.error(error);say('처리하지 못했어요. 다시 말씀하시거나 직원을 불러 주세요.');}appendMessage('bot',[$('#m').textContent,...Array.from($('#notes').children).map(e=>e.textContent)].filter(Boolean).join('\n'));$('#conversation').open=true;renderMessages();}
+function rulesHear(text){const t=text.trim();if(!t)return;appendMessage('user',t);try{handleMessage(t);}catch(error){console.error(error);say('처리하지 못했어요. 다시 말씀하시거나 직원을 불러 주세요.');}appendMessage('bot',[$('#m').textContent,...Array.from($('#notes').children).map(e=>e.textContent)].filter(Boolean).join('\n'));$('#conversation').open=true;renderMessages();}
 function handleMessage(t){
  if(/직원/.test(t))return staff();
  if(S.paid){say('결제된 주문은 여기서 변경할 수 없어요. 도움이 필요하면 직원을 불러 주세요.');return;}
@@ -123,5 +123,5 @@ $('#staff').onclick=staff;$('#reset').onclick=reset;$('#back').onclick=goBack;
 $('#theme').onclick=()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('#theme').textContent=dark?'☀':'☾';$('#theme').setAttribute('aria-label',dark?'라이트 모드로 전환':'다크 모드로 전환');};
 $('#closeDialog').onclick=()=>$('#dialog').close();
 TASTE_RE['달달']=/달달|달콤|단\s*거|달게/;TASTE_RE['부드러운']=/부드러|고소|순하게|순한/;
-reset();
+rulesReset();
 window.pearlsewon={get state(){return S;},get messages(){return messages;},select:id=>choose(byId[id]),hear,reset,back:goBack,priceOf,drinkSvg,styles:{drinks:DRINK_STYLE,toppings:TOP_STYLE,extras:EXTRA_STYLE}};

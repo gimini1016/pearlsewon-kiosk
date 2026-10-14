@@ -1,7 +1,7 @@
 """Share validated order logic between local and Vercel request handlers."""
 from urllib.parse import urlsplit
 
-from server import Handler
+from backend.server import Handler
 
 
 class HostedHandler(Handler):

@@ -2,8 +2,8 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from api_adapter import HostedHandler
-from server import settings
+from backend.vercel_handler import HostedHandler
+from backend.server import settings
 
 
 class handler(HostedHandler):

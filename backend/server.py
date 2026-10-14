@@ -16,8 +16,8 @@ import threading
 import urllib.error
 import urllib.request
 
-ROOT = Path(__file__).resolve().parent
-DEFAULT_ENV = Path('/Users/yangjimin/Documents/생성형ai/펄세권/.env')
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_ENV = Path.home() / 'Documents/생성형ai/펄세권/.env'
 MENU = json.loads((ROOT / 'data/menu.json').read_text())
 OPTIONS = json.loads((ROOT / 'data/options.json').read_text())
 STORE = json.loads((ROOT / 'data/store.json').read_text())

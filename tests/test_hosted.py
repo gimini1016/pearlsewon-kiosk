@@ -2,7 +2,7 @@ from email.message import Message
 import unittest
 from unittest.mock import patch
 
-from api_adapter import HostedHandler
+from backend.vercel_handler import HostedHandler
 from api.health import handler as HealthHandler
 
 

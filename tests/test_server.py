@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-import server
+from backend import server
 
 
 class OrderRules(unittest.TestCase):

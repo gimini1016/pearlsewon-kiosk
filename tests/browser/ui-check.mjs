@@ -1,4 +1,8 @@
-import {writeFileSync} from 'node:fs';
+import {writeFileSync, mkdirSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+const baseUrl=process.env.PEARL_BASE_URL||'http://127.0.0.1:8765';
+const artifacts=fileURLToPath(new URL('../../artifacts/',import.meta.url));
+mkdirSync(artifacts+'screenshots/',{recursive:true});
 const targets=await (await fetch('http://127.0.0.1:9223/json/list')).json();
 const ws=new WebSocket(targets.find(t=>t.type==='page').webSocketDebuggerUrl);
 await new Promise(r=>ws.addEventListener('open',r,{once:true}));
@@ -6,12 +10,12 @@ let next=1;const pending=new Map(),errors=[];
 ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);});
 function call(method,params={}){return new Promise((resolve,reject)=>{const id=next++;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});}
 async function evaluate(expression){const r=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
-await call('Runtime.enable');await call('Page.enable');await call('Page.addScriptToEvaluateOnNewDocument',{source:'window.__PEARL_RULES_TEST__=true;'});await call('Emulation.setDeviceMetricsOverride',{width:430,height:880,deviceScaleFactor:1,mobile:false});await call('Page.navigate',{url:'http://127.0.0.1:8765'});
+await call('Runtime.enable');await call('Page.enable');await call('Page.addScriptToEvaluateOnNewDocument',{source:'window.__PEARL_RULES_TEST__=true;'});await call('Emulation.setDeviceMetricsOverride',{width:430,height:880,deviceScaleFactor:1,mobile:false});await call('Page.navigate',{url:baseUrl});
 await new Promise(r=>setTimeout(r,900));
 const tests=[];
 async function check(name,expression){const ok=await evaluate(expression);tests.push({name,ok});if(!ok)throw new Error('Failed: '+name);}
 await check('initial screen and data',`window.pearlsewon&&pearlsewon.state.stage==='where'&&document.querySelector('#m').textContent.includes('포장')`);
-async function screenshot(name){const r=await call('Page.captureScreenshot',{format:'png'});writeFileSync('screenshots/'+name+'.png',Buffer.from(r.data,'base64'));}
+async function screenshot(name){const r=await call('Page.captureScreenshot',{format:'png'});writeFileSync(artifacts+'screenshots/'+name+'.png',Buffer.from(r.data,'base64'));}
 await screenshot('01-welcome');
 await evaluate(`document.querySelectorAll('#body .big')[0].click(); document.querySelectorAll('#body .big')[1].click()`);
 await check('taste map renders',`pearlsewon.state.stage==='taste'&&document.querySelectorAll('.cat').length===4`);await screenshot('02-flavour');
@@ -53,7 +57,6 @@ await check('chat HTML remains plain text',`(()=>{pearlsewon.hear('<img src=x on
 await call('Emulation.setDeviceMetricsOverride',{width:390,height:760,deviceScaleFactor:1,mobile:false});
 await evaluate(`pearlsewon.reset();document.documentElement.dataset.theme='light';window.scrollTo(0,0)`);await screenshot('09-mobile');
 await check('390 by 760 viewport fits',`document.documentElement.scrollWidth<=390&&document.querySelector('.k').getBoundingClientRect().bottom<=760`);
-await check('revised documents supplied',`true`);
-await check('no browser errors',`true`);
 if(errors.length)throw new Error('Browser errors: '+JSON.stringify(errors));
-writeFileSync('verification.json',JSON.stringify({tests,errors},null,2));console.log(JSON.stringify({passed:tests.length,browserErrors:errors.length,screenshots:9}));ws.close();
+tests.push({name:'no browser errors',ok:errors.length===0});
+writeFileSync(artifacts+'ui-verification.json',JSON.stringify({tests,errors},null,2));console.log(JSON.stringify({passed:tests.length,browserErrors:errors.length,screenshots:9}));ws.close();

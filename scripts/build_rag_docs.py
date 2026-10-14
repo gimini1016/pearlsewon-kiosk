@@ -1,12 +1,12 @@
 """menu.json + options.json → rag_docs.jsonl (LangChain Document 한 줄에 하나).
 
 RAG가 맡는 일: 설명 · 어울리는 상황 · 추천 이유. 가격 계산 · 옵션 규칙 · 품절은 코드가 JSON으로 판정해요.
-실행: python3 build_rag_docs.py
+실행: python3 scripts/build_rag_docs.py
 """
 import json
 from pathlib import Path
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).resolve().parents[1] / 'data'
 
 # 메뉴마다 '어울리는 상황'. 손님이 메뉴 이름 대신 상황·기분으로 말해도 검색에 걸리게 하는 핵심 문구예요.
 SITUATIONS = {

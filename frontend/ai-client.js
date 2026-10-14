@@ -1,5 +1,5 @@
 let aiMode = 'rules', aiPending = false, aiEpoch = 0, aiAbort = null;
-const baseReset = reset;
+const baseReset = rulesReset;
 const aiReady = (async () => {
   if (window.__PEARL_RULES_TEST__ || !/^https?:$/.test(location.protocol)) return;
   aiMode = 'checking';

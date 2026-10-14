@@ -1,5 +1,9 @@
-import {writeFileSync} from 'node:fs';
-const target=await(await fetch('http://127.0.0.1:9223/json/new?http://127.0.0.1:8765',{method:'PUT'})).json();
+import {writeFileSync, mkdirSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+const baseUrl=process.env.PEARL_BASE_URL||'http://127.0.0.1:8765';
+const artifacts=fileURLToPath(new URL('../../artifacts/',import.meta.url));
+mkdirSync(artifacts+'screenshots/',{recursive:true});
+const target=await(await fetch('http://127.0.0.1:9223/json/new?'+baseUrl,{method:'PUT'})).json();
 const ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.addEventListener('open',r,{once:true}));
 let next=1;const pending=new Map(),errors=[];
 ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result);}else if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);});
@@ -18,6 +22,6 @@ await evaluate(`pearlsewon.hear('펄이랑 화이트펄은 어떻게 다른가�
 await check('RAG explanation',`document.querySelector('#m').textContent.includes('타피오카')&&document.querySelector('#m').textContent.includes('해초')`);
 await check('explanation leaves order unchanged',`JSON.stringify(pearlsewon.state.cfg)===${JSON.stringify(before)}`);
 await check('messages and controls restored',`document.querySelectorAll('.bubble.user').length===3&&!document.querySelector('#in').disabled&&!document.querySelector('#body').inert`);
-const shot=await call('Page.captureScreenshot',{format:'png'});writeFileSync('screenshots/10-live-ai.png',Buffer.from(shot.data,'base64'));
+const shot=await call('Page.captureScreenshot',{format:'png'});writeFileSync(artifacts+'screenshots/10-live-ai.png',Buffer.from(shot.data,'base64'));
 if(errors.length)throw new Error('Browser errors: '+JSON.stringify(errors));
-writeFileSync('ai-verification.json',JSON.stringify({tests,errors,modelCalls:3},null,2));console.log(JSON.stringify({passed:tests.length,modelCalls:3,browserErrors:errors.length}));ws.close();
+writeFileSync(artifacts+'ai-verification.json',JSON.stringify({tests,errors,modelCalls:3},null,2));console.log(JSON.stringify({passed:tests.length,modelCalls:3,browserErrors:errors.length}));ws.close();
