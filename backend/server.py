@@ -55,7 +55,7 @@ def settings():
     values = read_env(env_path)
     return {
         'key': os.environ.get('OPENAI_API_KEY') or values.get('OPENAI_API_KEY', ''),
-        'model': os.environ.get('OPENAI_MODEL') or values.get('OPENAI_MODEL') or 'gpt-5.4-mini',
+        'model': os.environ.get('OPENAI_MODEL') or values.get('OPENAI_MODEL') or 'gpt-4.1-mini',
     }
 
 
