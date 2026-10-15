@@ -70,7 +70,7 @@ SITUATION_KB = [
      lambda i: _drink(i) and i["taste"]["단맛"] <= 2 and not _milk(i)),
     ("당을 줄이는 중", "덜 달게 드시려면 단맛이 낮은 메뉴를 고르거나, 당도를 30% 이하로 낮출 수 있어요. 흑당 밀크티는 당도 조절이 안 돼요.",
      lambda i: _drink(i) and i["taste"]["단맛"] <= 1),
-    ("우유를 피해야 할 때", "우유가 안 들어간 메뉴예요. 밀크폼·치즈폼에도 우유가 들어 있어요. 같은 도구로 만들어서 아주 적은 양이 섞일 수 있어요.",
+    ("우유를 피해야 할 때", "우유가 표기되지 않은 메뉴예요. 불포함이나 섭취 안전을 보장하지 않아요. 밀크폼·치즈폼에는 우유가 표기돼 있어요. 교차 접촉 여부는 직원에게 확인해요.",
      lambda i: _drink(i) and not _milk(i)),
     ("처음 왔을 때", "처음이라면 많이 찾는 베스트·시그니처 메뉴가 무난해요.",
      lambda i: i.get("badge") in ("베스트", "시그니처", "사장 추천")),
@@ -99,6 +99,8 @@ def menu_doc(i, d):
     if d.get("taste_categories"):
         lines.append(f"맛: {' · '.join(d['taste_categories'])} (단맛 {t['단맛']}, 신맛 {t['신맛']}, 짠맛 {t['짠맛']}, 진함 {t['진함']})")
     lines.append(f"설명: {i['description']}")
+    if i['temperatures']:
+        lines.append('제공 가능한 온도: ' + ' / '.join(i['temperatures']))
     lines.append(f"어울리는 상황: {SITUATIONS[i['id']]}")
     if i["category"] != "디저트":
         s = [d["size"], d["temp"]]
@@ -114,17 +116,20 @@ def menu_doc(i, d):
     lines.append("가격: " + " / ".join(f"{k} {won(v)}" for k, v in i["prices"].items()))
     caf = i.get("caffeine_mg")
     extra = [] if caf is None else [f"카페인 {caf}mg" if caf else "카페인 없음"]
-    extra.append("알레르기: " + (", ".join(i["allergens"]) or "없음"))
+    extra.append("표기 알레르기 성분: " + (", ".join(i["allergens"]) or "표기 정보 없음 (불포함·섭취 안전을 보장하지 않음)"))
     lines.append(" · ".join(extra))
     meta = {"id": i["id"], "type": "menu", "category": i["category"],
             "taste_categories": d.get("taste_categories", []),
-            "caffeine_mg": caf, "allergens": i["allergens"]}
+            "caffeine_mg": caf, "allergens": i["allergens"],
+            "temperatures": i['temperatures'], "source": "data/menu.json + data/options.json"}
     return {"page_content": "\n".join(lines), "metadata": meta}
 
 
 def topping_doc(tp):
-    return {"page_content": f"[토핑] {tp['name']} · {tp['texture']} · {won(tp['price'])}\n설명: {tp['description']}",
-            "metadata": {"id": f"topping_{tp['name']}", "type": "topping"}}
+    allergens = ', '.join(tp.get('allergens', [])) or '표기 정보 없음 (불포함·섭취 안전을 보장하지 않음)'
+    return {"page_content": f"[토핑] {tp['name']} · {tp['texture']} · {won(tp['price'])}\n설명: {tp['description']}\n표기 알레르기 성분: {allergens}",
+            "metadata": {"id": f"topping_{tp['name']}", "type": "topping", "source": "data/menu.json",
+                         "queries": ['검정색 알갱이가 뭐예요', '돌처럼 생긴 버블은 무슨 재료예요'] if tp['name'] == '펄' else []}}
 
 
 def build():
@@ -140,6 +145,27 @@ def build():
                      "metadata": {"id": f"situation_{k}", "type": "situation"}})
     docs += [{"page_content": f"[매장 정책] {k}\n{text}", "metadata": {"id": f"policy_{k}", "type": "policy", "source": "가상 정책(팀 결정)"}}
              for k, text in POLICY]
+    # Keep all knowledge in source records so regeneration cannot drop manual additions.
+    docs.append({"page_content": "[매장] 펄 신선도 (펄 언제 삶았어요?)\n펄은 30분마다 새로 삶아요. 지금 펄을 삶은 지 몇 분 됐는지는 매장 상태에 나와요.",
+                 "metadata": {"id": "store_펄 신선도", "type": "store", "source": "가상 정책(팀 결정)"}})
+    docs.append({"page_content": '[자주 묻는 말] 컵 용량과 사이즈\n' + '\n'.join(f'{size}: {guide}' for size, guide in menu['size_guide'].items()),
+                 "metadata": {"id": "faq_용량", "type": "faq", "source": "data/menu.json:size_guide",
+                              "queries": ['큰 사이즈 용량 몇 ml', '컵 몇 밀리', '중 대 사이즈 차이']}})
+    docs.append({"page_content": '[자주 묻는 말] 얼음 양 조절\nICE 음료 중 스무디·요거트를 제외하면 얼음은 ' + ', '.join(opts['ice']['levels']) + ' 중에 골라요. ' + opts['ice']['why_not'] + '. HOT 음료에는 얼음이 들어가지 않아요. 적게 옵션의 정확한 비율은 정해져 있지 않으므로 절반이라고 보장하지 않아요.',
+                 "metadata": {"id": "faq_얼음", "type": "faq", "source": "data/options.json:ice",
+                              "queries": ['얼음 절반만', '아이스 음료 얼음 적게', '얼음 양 바꿀 수 있어요']}})
+    docs.append({"page_content": '[매장] 좌석 조건\n좌석별 인원수·콘센트·창가 정보는 매장 상태의 seating을 확인해요. 전체 빈자리 수를 콘센트 자리 수나 함께 앉을 수 있는 자리 수로 안내하지 않아요. 좌석별 현재 상태가 확인되지 않으면 직원 확인을 안내해요.',
+                 "metadata": {"id": "store_좌석", "type": "store", "source": "data/store.json:seats",
+                              "queries": ['3명이 함께 앉을 자리', '충전기 콘센트 자리', '4인석 빈자리']}})
+    knowledge = json.loads((HERE / 'knowledge.json').read_text())
+    for entry in knowledge['documents']:
+        docs.append({'page_content': f"[{entry['type']}] {entry['content']}",
+                     'metadata': {k: entry[k] for k in ['id', 'type', 'source', 'queries']}})
+    for doc in docs:
+        if doc['metadata']['id'] == 'policy_직원 호출':
+            doc['page_content'] = '[매장 정책] 직원 호출\n직원 확인이 필요하면 직원 호출 화면을 열 수 있어요. 현재 호출은 시연 기능이며 실제 알림은 전송되지 않아요.'
+    ids = [d['metadata']['id'] for d in docs]
+    assert len(ids) == len(set(ids)), '중복된 문서 id가 있어요'
     return menu, docs
 
 

@@ -1,6 +1,15 @@
 {
   "words": [
     {
+      "text": "아바라",
+      "kind": "바닐라 라떼",
+      "changes": [{"field": "temp", "value": "ICE", "mode": "set"}]
+    },
+    {
+      "text": "흑버",
+      "kind": "흑당 밀크티 + 펄"
+    },
+    {
       "text": "아메리카노",
       "kind": "메뉴"
     },

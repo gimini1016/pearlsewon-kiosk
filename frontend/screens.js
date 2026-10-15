@@ -106,7 +106,7 @@ function say(m,notes=[]){if(chatTurn&&!rendering){chatTurn.push(m,...notes);retu
 function memo(){ $('#sn').textContent=({where:'취향대로, 한 잔',fork:'메뉴 고르기',order:'말로 주문하기',taste:'오늘의 취향',picks:'추천 메뉴',full:'전체 메뉴',cup:'나의 한 잔',cart:'담은 메뉴',pay:'결제',notify:'주문 알림',done:'주문 완료',offer:'이런 메뉴는 어떠세요'})[S.stage]||'취향대로, 한 잔';$('#back').disabled=historyStack.length===0||S.paid;$('#f').hidden=S.stage==='notify'||S.stage==='done';
  const n=S.cart.reduce((a,l)=>a+l.qty,0),sum=S.cart.reduce((a,l)=>a+l.price*l.qty,0),cb=$('#cartBtn');cb.hidden=S.paid||S.stage==='notify'||S.stage==='done';cb.disabled=false;cb.innerHTML=ICON.bag+'<span class="cb-l">담은 메뉴</span><b class="cb-n">'+n+'</b>'+(n?'<span class="cb-s">'+won(sum)+'</span>':'');cb.setAttribute('aria-label','담은 메뉴 '+n+'잔'+(n?', '+won(sum):'')+' 보기');cb.classList.toggle('here',S.stage==='cart');if(n>cartCount&&!flying){cb.classList.remove('bump');void cb.offsetWidth;cb.classList.add('bump');}cartCount=n;
  $('#sn').hidden=S.stage==='where';}
-function snapshot(){return {offer:[...(S.offer||[])],offerMsg:S.offerMsg||'',offerSold:S.offerSold||null,stage:S.stage,where:S.where,cat:S.cat,situ:S.situ,less:S.less,nomilk:S.nomilk,from:S.from||'board',pool:S.pool.map(i=>i.id),page:S.page,rerolls:S.rerolls,item:S.item?.id||null,cfg:S.cfg?clone(S.cfg):null};}
+function snapshot(){return {recommendationOptions:clone(S.recommendationOptions||{}),offer:[...(S.offer||[])],offerMsg:S.offerMsg||'',offerSold:S.offerSold||null,stage:S.stage,where:S.where,cat:S.cat,situ:S.situ,less:S.less,nomilk:S.nomilk,from:S.from||'board',pool:S.pool.map(i=>i.id),page:S.page,rerolls:S.rerolls,item:S.item?.id||null,cfg:S.cfg?clone(S.cfg):null};}
 function show(){const same=currentStage===S.stage,top=B.scrollTop;if(currentStage!==null&&!same&&lastSnapshot)historyStack.push(lastSnapshot);currentStage=S.stage;B.innerHTML='';memo();rendering=true;try{({where,fork,order,taste,picks,full,cup,cart,pay,notify,done,offer})[S.stage]();}finally{rendering=false;fx={};}B.scrollTop=same?top:0;lastSnapshot=snapshot();renderMessages();}
 function goBack(){if($('#dialog').open){$('#dialog').close();return;}if(S.paid||!historyStack.length)return;const p=historyStack.pop();const cartNow=S.cart;Object.assign(S,p,{pool:p.pool.map(id=>byId[id]),item:p.item?byId[p.item]:null,cart:cartNow});currentStage=S.stage;lastSnapshot=null;B.scrollTop=0;if(S.stage==='cup'){const k=S.cart.length-1;editIndex=k>=0&&S.cart[k].i.id===S.item.id?k:null;}show();}
 function rulesReset(){S={stage:'where',quick:null,quickFrom:null,where:null,cat:null,situ:null,less:false,nomilk:false,pool:[],page:0,rerolls:0,item:null,cfg:null,cart:[],dec:0,offer:[],offerMsg:'',offerSold:null,paid:false,phone:null,maskedPhone:null,number:null,payment:null};messages=[];historyStack=[];currentStage=null;lastSnapshot=null;editIndex=null;draftCache.clear();cartCount=0;if($('#dialog').open)$('#dialog').close();$('#in').value='';$('#conversation').open=false;show();appendMessage('bot','안녕하세요, 펄세권이에요. 매장에서 드세요, 포장하세요?');}
@@ -130,7 +130,7 @@ function fork(){say('메뉴 정하셨어요?');B.append(btn('big','<b>정했어�
 const baseTaste=legacyTaste,basePicks=legacyPicks,baseFull=legacyFull;
 // '로/으로': 받침이 없거나 ㄹ 받침이면 '로'
 const toJosa=w=>{const c=w.replace(/[^가-힣]/g,'').slice(-1).charCodeAt(0)-0xac00,j=c>=0?c%28:0;return j===0||j===8?'로':'으로';};
-function goPicks(){S.pool=buildPool();S.page=0;S.rerolls=0;S.from=chatTurn?'chat':'board';S.stage='picks';show();}
+function goPicks(){S.recommendationOptions={};S.pool=buildPool();S.page=0;S.rerolls=0;S.from=chatTurn?'chat':'board';S.stage='picks';show();}
 const CAT_ADJ={'달달':'달달한','상큼':'상큼한','진한':'진한','부드러운':'순한'};
 function taste(){const ok=i=>!i.sold_out&&(!S.less||lessOk(i))&&(!S.nomilk||!milk(i));say('오늘은 어떤 맛으로 드릴까요?',[...(S.less?['단맛 2 이하 메뉴만 남겼어요.']:[]),...(S.nomilk?['우유가 들어간 메뉴는 뺐어요.']:[])]);
  const slot=box('fmap');B.append(slot);
@@ -144,10 +144,10 @@ function taste(){const ok=i=>!i.sold_out&&(!S.less||lessOk(i))&&(!S.nomilk||!mil
 function picks(){const p=S.pool.slice(S.page*3,S.page*3+3);
  if(!p.length){S.stage='full';show();say('조건에 맞는 메뉴가 없어서 전체 메뉴를 보여 드려요.');return;}
  const chat=S.from==='chat',what=(S.situ?`‘${S.situ}’에 맞는`:S.cat?CAT_ADJ[S.cat]+(S.less?' 맛 중 덜 단':' 맛'):S.less?'덜 단':chat?'말씀하신 대로':'어울리는')+(S.nomilk?', 우유 없는':'');
- say(`${what} ${p.length}잔을 골랐어요.`);
+ say(`${what} ${p.length}${p.every(i=>i.category==='디저트')?'개':'잔'}을 골랐어요.`);
  const slot=box('fmap');B.append(slot);
  const row=box('pick-row');row.style.setProperty('--n',p.length);
- p.forEach((i,n)=>row.append(btn('card pick-card',`${drinkSvg(i,null,true)}<span class="pk"><span class="r"><b><span class="no" style="background:${color(catOf(i))}">${n+1}</span>${esc(i.name)}</b></span><span class="pr">${won(Object.values(i.prices)[0])}${i.badge?'<span class="tag">'+esc(i.badge)+'</span>':''}</span><span class="why">${esc(reason(i))}</span></span>`,()=>{decide();choose(i);})));
+ p.forEach((i,n)=>{const cfg=S.from==='chat'?S.recommendationOptions?.[i.id]:null;row.append(btn('card pick-card',`${drinkSvg(i,cfg,true)}<span class="pk"><span class="r"><b><span class="no" style="background:${color(catOf(i))}">${n+1}</span>${esc(i.name)}</b></span><span class="pr">${won(cfg?priceOf(i,cfg):Object.values(i.prices)[0])}${i.badge?'<span class="tag">'+esc(i.badge)+'</span>':''}</span><span class="why">${esc([cfg?.temp==='HOT'?'따뜻하게':null,reason(i)].filter(Boolean).join(' · '))}</span></span>`,()=>{decide();choose(i);}));});
  B.append(row);
  const left=2-S.rerolls,more=S.pool.length>(S.page+1)*3,r=box('row2');
  if(left>0&&more)r.append(btn('ghost',`다른 추천 (${left}번 남음)`,()=>{S.rerolls++;S.page++;decide();show();}));
@@ -157,7 +157,7 @@ function picks(){const p=S.pool.slice(S.page*3,S.page*3+3);
   if(!chat&&first&&!shown){const n=first.name.split(' + ')[0];const lead=({'베스트':'베스트','시그니처':'시그니처','사장 추천':'사장님 추천'})[first.badge]||'처음 추천한';r.append(btn('ghost',`${lead} ${n}${toJosa(n)} 할게요`,()=>{decide();choose(first);}));}
   else r.append(btn('ghost','맛으로 다시 고를게요',()=>{decide();S.cat=S.situ=null;S.stage='taste';show();}));}
  r.append(btn('ghost','전체 보기',()=>{decide();S.stage='full';show();}));
- B.append(r);slot.replaceWith(flavorMap({focus:p.map(i=>i.id),numbered:p.map(i=>i.id),compact:true,room:roomLeft()}));}
+ B.append(r);if(p.every(i=>i.category==='디저트'))slot.remove();else slot.replaceWith(flavorMap({focus:p.map(i=>i.id),numbered:p.map(i=>i.id),compact:true,room:roomLeft()}));}
 // 판 본문에서 아직 비어 있는 높이(지도를 그만큼 키운다)
 function roomLeft(){const cs=getComputedStyle(B),kids=B.children,used=kids[kids.length-1].getBoundingClientRect().bottom-kids[0].getBoundingClientRect().top;return B.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-used-2;}
 /* 맛 지도: 진·위스키 맵처럼 칸 격자 위에 이름표를 단 점. 가로 단맛 0~5, 세로 진함 0~5, 칸 한가운데가 그 값 */
@@ -208,8 +208,17 @@ function full(){say('어떤 메뉴로 드릴까요?');for(const category of D.ca
 function alternativesOf(i){const cats=new Set(DEF[i.id]?.taste_categories||[]);const pool=drinks.filter(d=>!d.sold_out&&d.id!==i.id);const same=pool.filter(d=>(DEF[d.id]?.taste_categories||[]).some(c=>cats.has(c)));return (same.length?same:pool).sort((a,b)=>Math.abs(a.taste['단맛']-i.taste['단맛'])-Math.abs(b.taste['단맛']-i.taste['단맛'])||(a.category!==i.category)-(b.category!==i.category)).slice(0,3).map(d=>d.id);}
 function soldOutMessage(i,alts){return `죄송해요, ${josa(i.name,'이','가')} 지금 품절이에요.`+(alts.length?' 대신 이건 어떠세요?':'');}
 function offerMenus(ids,message,soldId=null){S.offer=ids.filter(id=>byId[id]&&!byId[id].sold_out);S.offerMsg=message;S.offerSold=soldId&&byId[soldId]?soldId:null;S.stage='offer';show();}
-function offer(){say(S.offerMsg||(S.offerSold?`${byId[S.offerSold].name.split(' + ')[0]} 대신 이건 어떠세요?`:'이런 메뉴는 어떠세요?'));if(S.offerSold){const s=byId[S.offerSold];B.append(box('card menu-list-card is-sold sold-row',`${drinkSvg(s,null,true)}<span><span class="r"><b>${esc(s.name)}</b><span class="sold-tag">품절</span></span><span class="why">오늘 준비한 양이 다 나갔어요</span></span>`));}S.offer.forEach((id,n)=>{const i=byId[id];B.append(btn('card menu-list-card',`${drinkSvg(i,null,true)}<span><span class="r"><b>${esc(i.name)}</b><span class="pr">${won(Object.values(i.prices)[0])}</span></span><span class="why">${esc(firstSitu(i))}</span></span>`,()=>choose(i)));});B.append(btn('ghost','전체 메뉴 보기',()=>{S.stage='full';show();}));}
-function choose(i,cfg,lead,notes){if(i.sold_out){const alts=alternativesOf(i);offerMenus(alts,soldOutMessage(i,alts),i.id);return;}if(S.item&&S.cfg)draftCache.set(S.item.id,clone(S.cfg));const same=S.item?.id===i.id;S.item=i;S.cfg=cfg||(same&&draftCache.has(i.id)?clone(draftCache.get(i.id)):defaultsFor(i));editIndex=null;if(!cfg&&!same&&S.less&&sugarAdjustable(i))S.cfg.sugar=DEF[i.id].sugar_less_sweet??30;S.stage='cup';show();if(lead||notes?.length)say(lead||$('#m').textContent,notes);}
+function offer(){
+ say(S.offerMsg||(S.offerSold?`${byId[S.offerSold].name.split(' + ')[0]} 대신 이건 어떠세요?`:'이런 메뉴는 어떠세요?'));
+ if(S.offerSold){const s=byId[S.offerSold];B.append(box('card menu-list-card is-sold sold-row',`${drinkSvg(s,null,true)}<span><span class="r"><b>${esc(s.name)}</b><span class="sold-tag">품절</span></span><span class="why">오늘 준비한 양이 다 나갔어요</span></span>`));}
+ S.offer.forEach(id=>{
+  const i=byId[id],cfg=S.from==='chat'?S.recommendationOptions?.[id]:null;
+  const description=[cfg?.size,cfg?.temp==='HOT'?'따뜻하게':cfg?.temp==='ICE'?'차갑게':null,firstSitu(i)].filter(Boolean).join(' · ');
+  B.append(btn('card menu-list-card',`${drinkSvg(i,cfg,true)}<span><span class="r"><b>${esc(i.name)}</b><span class="pr">${won(cfg?priceOf(i,cfg):Object.values(i.prices)[0])}</span></span><span class="why">${esc(description)}</span></span>`,()=>choose(i)));
+ });
+ B.append(btn('ghost','전체 메뉴 보기',()=>{S.stage='full';show();}));
+}
+function choose(i,cfg,lead,notes){if(i.sold_out){const alts=alternativesOf(i);offerMenus(alts,soldOutMessage(i,alts),i.id);return;}if(S.item&&S.cfg)draftCache.set(S.item.id,clone(S.cfg));const same=S.item?.id===i.id,recommended=S.from==='chat'&&S.recommendationOptions?.[i.id];S.item=i;S.cfg=cfg||(recommended?clone(recommended):same&&draftCache.has(i.id)?clone(draftCache.get(i.id)):defaultsFor(i));editIndex=null;if(!cfg&&!recommended&&!same&&S.less&&sugarAdjustable(i))S.cfg.sugar=DEF[i.id].sugar_less_sweet??30;S.stage='cup';show();if(lead||notes?.length)say(lead||$('#m').textContent,notes);}
 function optionGroup(title,values,current,initial,change,format=x=>x,disabled=x=>false){const wide=values.length>3||values.map(v=>String(format(v)).replace(/<[^>]+>/g,'')).join('').length>15;const g=box('option-group'+(wide?' wide':''));const changed=JSON.stringify(current)!==JSON.stringify(initial);g.append(box('option-heading',esc(title)+(changed?'<span class="changed">변경됨</span>':'')));const row=box('choice-row');row.style.setProperty('--n',values.length);for(const value of values){const on=current===value;const b=btn('chip'+(on&&changed?' changed-choice':''),(on?ICON.mark:'')+format(value),()=>{if(on)return;change(value);fx={kind:title,drop:title==='얼음'?'얼음':title==='시럽'?'시럽':null};show();},{disabled:disabled(value)});b.setAttribute('aria-pressed',String(on));row.append(b);}g.append(row);(OPT||B).append(g);}
 function cup(){const i=S.item,c=S.cfg,b=defaultsFor(i);say('이대로 드릴까요? 바꾸고 싶은 것만 골라 주세요.');const ingredients=[...c.tops,c.syrup?extra(c.syrup).name:null,c.shot?'샷 '+c.shot+'회':null,c.oat?'오트밀크':null,c.decaf?'디카페인':null].filter(Boolean);const scale=i.category==='디저트'?1:({'소':.9,'중':1,'대':1.12})[c.size]||1,from=fx.kind==='사이즈'?cupScale:scale;cupScale=scale;
  const cls=fx.kind==='사이즈'?'grow':fx.kind&&!fx.drop?'rattle':'';

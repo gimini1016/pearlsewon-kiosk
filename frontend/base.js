@@ -7,7 +7,7 @@ const drinks = items.filter(i => i.category !== '디저트');
 const CATS = ['달달', '상큼', '진한', '부드러운'];
 const CAT = { '달달': ['--sweet', '흑당처럼 진하게 단'], '상큼': ['--tangy', '과일처럼 새콤한'], '진한': ['--rich', '커피·차처럼 진한'], '부드러운': ['--mild', '우유처럼 순한'] };
 const catOf = i => ((DEF[i.id] && DEF[i.id].taste_categories) || [])[0];
-const color = c => `var(${CAT[c][0]})`;
+const color = c => CAT[c] ? `var(${CAT[c][0]})` : 'var(--ink)';
 const milk = i => i.allergens.includes('우유');
 const caf = i => i.caffeine_mg || 0;
 // 카페인 숫자는 알아듣는 말로: 아메리카노(129mg) 한 잔을 기준으로 견준다

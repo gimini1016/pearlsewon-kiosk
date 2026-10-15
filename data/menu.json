@@ -702,12 +702,14 @@
     {
       "name": "밀크폼",
       "price": 700,
+      "allergens": ["우유"],
       "texture": "부드러운 거품",
       "description": "음료 위에 올리는 달콤짭쪼름한 우유 거품. 단짠 좋아하면 추천."
     },
     {
       "name": "치즈폼",
       "price": 900,
+      "allergens": ["우유"],
       "texture": "꾸덕한 거품",
       "description": "치즈 풍미가 진한 달콤짭쪼름 거품. 밀크폼보다 짭짤하고 진해요."
     }
