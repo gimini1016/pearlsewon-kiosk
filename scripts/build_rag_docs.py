@@ -157,6 +157,21 @@ def build():
     docs.append({"page_content": '[매장] 좌석 조건\n좌석별 인원수·콘센트·창가 정보는 매장 상태의 seating을 확인해요. 전체 빈자리 수를 콘센트 자리 수나 함께 앉을 수 있는 자리 수로 안내하지 않아요. 좌석별 현재 상태가 확인되지 않으면 직원 확인을 안내해요.',
                  "metadata": {"id": "store_좌석", "type": "store", "source": "data/store.json:seats",
                               "queries": ['3명이 함께 앉을 자리', '충전기 콘센트 자리', '4인석 빈자리']}})
+    # 추가 옵션도 문서로: 요금·넣을 수 있는 메뉴·횟수 (가격은 options.json이 원본)
+    option_queries = {'shot': ['샷 추가 얼마', '더 진하게 샷', '샷 몇 번까지'], 'decaf': ['디카페인 돼요', '디카페인 얼마'],
+                      'oat_milk': ['오트밀크로 바꿔요', '우유 대신 오트'], 'syrup_vanilla': ['바닐라 시럽 추가', '시럽 넣을 수 있어요'],
+                      'syrup_hazelnut': ['헤이즐넛 시럽 추가'], 'syrup_caramel': ['카라멜 시럽 추가']}
+    for e in opts['extras']:
+        lines = [f"[옵션] {e['name']} · +{won(e['price'])}", f"넣을 수 있는 메뉴: {', '.join(e['categories'])}", f"한 잔에 최대 {e['max']}{'회' if e['id'] == 'shot' else '번'}"]
+        if e.get('requires_allergen'):
+            lines.append(f"{e['requires_allergen']}가 들어간 메뉴에서만 바꿀 수 있어요.")
+        if e['id'] == 'decaf':
+            lines.append('디카페인으로 바꾼 뒤의 카페인 수치는 자료에 없어요.')
+        if e['id'] == 'shot':
+            lines.append('샷을 추가한 뒤의 정확한 카페인 수치는 자료에 없어요.')
+        docs.append({"page_content": '\n'.join(lines),
+                     "metadata": {"id": f"option_{e['id']}", "type": "option", "source": "data/options.json:extras",
+                                  "queries": option_queries.get(e['id'], [])}})
     knowledge = json.loads((HERE / 'knowledge.json').read_text())
     for entry in knowledge['documents']:
         docs.append({'page_content': f"[{entry['type']}] {entry['content']}",

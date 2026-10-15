@@ -257,6 +257,8 @@ def retrieve(text, current_id=None):
             score += 25
         if doc['metadata']['type'] in ['faq','topping'] and any(t in text and t in doc['page_content'] for t in TOPPINGS):
             score += 8
+        if meta['id'] in OPTION_WORDS and re.search(OPTION_WORDS[meta['id']], text):
+            score += 12  # "샷 추가 얼마예요?" → 샷 옵션 문서
         if doc['metadata']['type'] == 'store' and re.search(r'삶|신선|언제', text) and '펄' in text:
             score += 12  # "펄 언제 삶았어요?"는 토핑 설명보다 매장 소식이 먼저
         if meta['id'] in ['situation_' + scene for scene in hints['scenarios']]:
@@ -430,12 +432,34 @@ ASKS_AVAILABILITY = re.compile(r'있어|있나|있을까|없어|주문|주세요
 LESS_SWEET = re.compile(r'안\s*달|덜\s*달|안\s*단|덜\s*단|달지\s*않|단\s*거\s*싫|단\s*게\s*싫')
 ASKS_INFO = re.compile(r'카페인|칼로리|가격|얼마|알레르기|성분|맛이|맛은|어때|설명|차이|당도|뭐|무엇|뭔가|들어가|재료|알갱|돌멩|돌맹|용량|온도|따뜻|차갑|뜨거|레시피')
 UNKNOWN_REPLY = '그건 제가 대답하기 어려워요. 이어서 주문을 도와드릴게요.'
+# 키오스크가 해 줄 수 없는 요청은 한마디로 정리하고 주문으로 돌아간다
+MEAL_REQUEST = re.compile(r'(아침|점심|저녁)\s*(메뉴|밥|식사|뭐\s*먹)|(밥|식사)\s*(추천|메뉴)')
+MEAL_REPLY = '펄세권에는 식사 메뉴가 없고 음료와 디저트만 있어요. 이어서 주문을 도와드릴게요.'
+PRICE_CHANGE = re.compile(r'(가격|값|금액).*(0원|공짜|무료|깎|내려|낮춰)|(0원|공짜|무료)\s*(으로|로)?\s*(해|줘|주세요|돼|안\s*돼)')
+PRICE_CHANGE_REPLY = '가격은 바꿀 수 없어요. 이어서 주문을 도와드릴게요.'
+INGREDIENT_Q = re.compile(r'뭐\s*들어|무엇이\s*들어|재료|성분|알레르기|알러지')
+OPTION_WORDS = {'option_shot': r'샷', 'option_decaf': r'디카페인', 'option_oat_milk': r'오트',
+                'option_syrup_vanilla': r'바닐라\s*시럽|시럽', 'option_syrup_hazelnut': r'헤이즐넛|시럽',
+                'option_syrup_caramel': r'카라멜|캐러멜|시럽'}
 # '버블티'처럼 종류만 말하면 어느 메뉴인지 되묻고, 펄이 든 메뉴를 카드로 보여 준다
 GENERIC_BUBBLE = re.compile(r'버블티|펄\s*음료|펄\s*들어간')
 BADGE_RANK = {'베스트': 0, '시그니처': 1}
 BUBBLE_MENUS = sorted([i['id'] for i in MENU['items'] if i['category'] != '디저트' and i['id'] not in SOLD_OUT and set(OPTIONS['menu_defaults'].get(i['id'], {}).get('toppings', [])) & {'펄', '화이트펄'}],
                       key=lambda iid: BADGE_RANK.get(BY_ID[iid].get('badge'), 2))
 CAF_COMPARE = re.compile(r'아메리카노\s*(의\s*)?(한|반|절반|두|\d/\d)\s*잔')
+
+
+def caf_sentence(item):
+    """답에 쓰는 카페인 한 문장. 숫자만 말하지 않고 아메리카노 한 잔(129mg)과 견준다."""
+    mg = item.get('caffeine_mg') or 0
+    if not mg:
+        return f"{josa(item['name'], '은', '는')} 카페인이 없어요(0mg)."
+    if item['id'] == 'americano':
+        return f"아메리카노 카페인은 한 잔에 {mg}mg이에요."
+    word = caf_words(item).rsplit('(', 1)[0]
+    if word == '조금':
+        return f"{josa(item['name'], '은', '는')} 카페인이 조금 있어요({mg}mg)."
+    return f"{item['name']} 카페인은 {word}이에요({mg}mg)."
 
 
 def caf_words(item):
@@ -644,9 +668,13 @@ def verified_fact_reply(reply, text, state):
     money_claim = bool(re.search(r'\d[\d,.]*(?:만|천|백)?\s*원', reply))
     volume_claim = bool(re.search(r'\d[\d,.]*\s*(?:ml|밀리리터|리터|l)(?![a-z])', reply, re.I))
     caffeine_claim = bool(re.search(r'\d[\d,.]*\s*(?:mg|밀리그램)', reply, re.I))
-    money = bool(re.search(r'가격|얼마|요금|총액|합계', text))
+    money = bool(re.search(r'가격|요금|총액|합계', text)) or ('얼마' in text and not re.search(r'(?<!디)카페인', text))
     volume = bool(re.search(r'용량|몇\s*(?:ml|밀리|리터)', text, re.I))
-    caffeine = '카페인' in text or bool(re.search(r'몇\s*(?:mg|밀리그램)', text, re.I))
+    caffeine = bool(re.search(r'(?<!디)카페인', text)) or bool(re.search(r'몇\s*(?:mg|밀리그램)', text, re.I))
+    ingredient = bool(INGREDIENT_Q.search(text)) and bool(menus_in(text))
+    money_asked = money
+    # "타로 밀크티에 샷 추가할 수 있나요?"처럼 메뉴+옵션을 물으면 숫자가 없어도 서버가 가능 여부를 확인한다
+    option_q = bool(menus_in(text)) and bool(re.search(r'샷|디카페인|오트|시럽|' + '|'.join(TOPPINGS), CAF_COMPARE.sub(' ', text))) and bool(re.search(r'추가|넣|변경|바꿀|바꿔|가능|되나|돼요|있나', text))
     zero_caffeine = bool(re.search(r'카페인(?:이|은|도)?(?:없|제로|안들)', compact(reply)))
     asked = menus_in(text)
     subjects = asked or menus_in(CAF_COMPARE.sub(' ', reply))
@@ -659,9 +687,9 @@ def verified_fact_reply(reply, text, state):
                   (r'상큼|새콤|신맛|셔요', '신맛', '상큼해요'), (r'짠맛|짭짤|짜요', '짠맛', '짭짤해요')]
     requested_dimensions = [(field, adjective) for pattern, field, adjective in dimensions if compare and re.search(pattern, text)]
     # Numeric claims not asked for must not crowd out other requested facts.
-    if not (money or volume or caffeine or requested_dimensions):
+    if not (money or volume or caffeine or requested_dimensions or ingredient or option_q):
         money, volume, caffeine = money_claim, volume_claim, caffeine_claim
-    if not (money or volume or caffeine or requested_dimensions):
+    if not (money or volume or caffeine or requested_dimensions or ingredient or option_q):
         return reply
     facts = []
     hints = query_hints(text)
@@ -674,9 +702,9 @@ def verified_fact_reply(reply, text, state):
         facts.append(f"메뉴의 {field} 기준은 {values}로, {conclusion}.")
     quote = current_order_quote(text, state)
     option_request = bool(re.search(r'추가|변경|디카페인|오트|시럽|합계|총액|합쳐|두\s*잔|[2-9]\s*잔', text))
-    if money and option_request and not asked and not quote:
+    if (money or option_q) and (option_request or option_q) and not quote:
         # A question about an extra's fee is not a claim about the whole drink.
-        fees = [(e['name'], e['price']) for e in EXTRAS.values()
+        fees = [(e['name'], e['price'], e['categories']) for e in EXTRAS.values()
                 if re.sub(r'\s+', '', e['name'].replace('으로', '').replace('로 변경', '')) in compact(text)
                 or e['id'] == 'shot' and '샷' in text
                 or e['id'] == 'oat_milk' and '오트' in text
@@ -684,8 +712,26 @@ def verified_fact_reply(reply, text, state):
         topping_names = [name for name in TOPPINGS if name in text]
         if '화이트펄' in topping_names:
             topping_names.remove('펄')
-        fees += [(name + ' 추가', TOPPINGS[name]['price']) for name in topping_names]
-        facts += [f'{name} 요금은 {value:,}원이에요.' for name, value in fees]
+        fees += [(name + ' 추가', TOPPINGS[name]['price'], OPTIONS['toppings']['categories']) for name in topping_names]
+        label_of = lambda name: name.replace('디카페인으로', '디카페인 변경').replace('오트밀크로 변경', '오트밀크 변경')
+        for iid in (asked if fees else [])[:2]:
+            # 메뉴를 함께 말하면 그 메뉴에 넣을 수 있는지부터 말한다
+            item = BY_ID[iid]
+            ok = [label_of(n) for n, _, cats in fees if item['category'] in cats]
+            no = [label_of(n) for n, _, cats in fees if item['category'] not in cats]
+            if ok:
+                facts.append(f"{item['name']}에는 {', '.join(ok)} 옵션을 넣을 수 있어요.")
+            if no:
+                facts.append(f"{item['name']}에는 {', '.join(no)} 옵션을 넣을 수 없어요.")
+        if fees and not asked:
+            facts += [f"{label_of(n)} 옵션은 {', '.join(cats)} 메뉴에 넣을 수 있어요." for n, _, cats in fees]
+        facts += [f'{label_of(name)} 옵션 요금은 {value:,}원이에요.' for name, value, _ in fees]
+        if fees and money_asked:
+            for iid in asked[:2]:
+                item = BY_ID[iid]
+                if any(item['category'] in cats for _, _, cats in fees):
+                    label = ' / '.join(f'{s} {p:,}원' for s, p in item['prices'].items())
+                    facts.append(f"{item['name']} 기본 가격은 {label}이고, 옵션 요금은 따로 더해져요.")
         if fees:
             money = False
     for iid in subjects[:3]:
@@ -709,7 +755,7 @@ def verified_fact_reply(reply, text, state):
                 prices = {s:p for s,p in item['prices'].items() if not hints['size'] or s == hints['size']}
                 label = ' / '.join(f'{s} {p:,}원' for s, p in prices.items())
                 facts.append(f"{item['name']} 기본 가격은 {label}이에요." if label else f"{item['name']}는 요청하신 사이즈가 없어요.")
-        if caffeine:
+        if caffeine and not (item['category'] == '디저트' and any(BY_ID[s]['category'] != '디저트' for s in subjects)):
             extra_changes = explicit_extra_changes(text, {})
             modified = bool(quote and (quote['proposed_options']['shot'] or quote['proposed_options']['decaf']))
             requested_modified = any(ch['field'] == 'shot' and ch['value'] != '0' or ch['field'] == 'decaf' and ch['value'] == 'true' for ch in extra_changes)
@@ -720,7 +766,12 @@ def verified_fact_reply(reply, text, state):
             else:
                 if item['caffeine_mg'] == 0 and zero_caffeine and not (money or volume or requested_dimensions) and not caffeine_claim:
                     return reply
-                facts.append(f"{item['name']}의 기본 메뉴 카페인은 {item['caffeine_mg']}mg이에요.")
+                facts.append(caf_sentence(item))
+    if ingredient:
+        for iid in menus_in(text)[:3]:
+            item = BY_ID[iid]
+            allergens = ', '.join(item['allergens']) or '표기 정보 없음'
+            facts.append(f"{item['description']} 표기 알레르기 성분은 {allergens}예요.")
     if volume:
         if subjects and all(BY_ID[iid]['category'] == '디저트' for iid in subjects):
             facts.append('디저트에는 음료 컵 용량이 적용되지 않아요.')
@@ -751,6 +802,10 @@ def execute_plan(plan, state, text=''):
     picked = [r.get('menu_id') for r in plan.get('items', [])] + list(plan.get('recommendations', []))
     sold = [i for i in dict.fromkeys(asked + picked) if i in SOLD_OUT]
     hints = query_hints(text)
+    if MEAL_REQUEST.search(text) and not asked and intent in ['reply', 'recommend', 'navigate', 'unknown']:
+        return dict(result, intent='reply', reply=MEAL_REPLY)
+    if PRICE_CHANGE.search(text) and intent != 'staff':
+        return dict(result, intent='reply', reply=PRICE_CHANGE_REPLY)
     if hints['child'] and intent in ['reply', 'recommend'] and re.search(r'먹|마실|마셔|추천|괜찮|가능', text):
         return dict(result, intent='reply', reply='아기·어린이의 연령별 섭취 적합성은 자료에 없어요. 카페인과 펄 등 재료를 직원에게 확인해 주세요.')
     if intent in ['reply', 'recommend', 'navigate'] and OFF_TOPIC.search(text) and not asked and not hints['scenarios']:
@@ -860,6 +915,10 @@ def execute_plan(plan, state, text=''):
         result['reply'] = OVER_PROMISE.sub('', result['reply']).strip() or '확인되지 않은 정보는 직원에게 확인해 주세요.'
     result = validate_choices(result, text, where)
     result['warnings'] = list(dict.fromkeys(result['warnings']))
+    if result['intent'] in ['order', 'modify'] and result['items'] and re.search(r'카페인|알레르기|알러지|성분|뭐\s*들어|재료', text):
+        info = verified_fact_reply('', text, state)
+        if info and not info.startswith('확인할 메뉴'):
+            result['reply'] = (result['reply'] + ' ' + info).strip()
     return result
 
 

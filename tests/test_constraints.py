@@ -171,7 +171,8 @@ class ConstraintGuards(unittest.TestCase):
 
     def test_unsupported_option_price_is_not_confirmed(self):
         result = self.run_plan('아바라 샷 추가하면 얼마예요?', intent='reply', reply='바닐라 라떼는 100원이에요.', recommendations=[])
-        self.assertNotIn('100원', result['reply'])
+        # 지어낸 '100원'만 막는다(대 사이즈 '6,100원' 같은 실제 가격의 일부는 허용)
+        self.assertNotRegex(result['reply'], r'(?<![\d,])100원')
         self.assertIn('옵션', result['reply'])
 
     def test_extra_and_topping_fees_come_from_option_data(self):
