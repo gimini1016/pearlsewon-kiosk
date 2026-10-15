@@ -26,7 +26,7 @@ const DRINK_STYLE = {
 };
 const TOP_STYLE = {'펄':['#2a1912','circle'],'화이트펄':['#f1ede1','circle'],'코코넛':['#f8eed2','square'],'알로에':['#cfe2ad','square'],'밀크폼':['#fbf4e6','foam'],'치즈폼':['#f2d78f','foam']};
 const EXTRA_STYLE = {shot:'#3b2214',decaf:'#986643',syrup_vanilla:'#ead2a0',syrup_hazelnut:'#b7884e',syrup_caramel:'#c58336',oat_milk:'#e6d4ad'};
-const ICON={minus:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>',plus:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>',bag:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8h13l-1.2 12H6.7z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',chat:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-6 4z"/></svg>',mark:'<svg class="ic mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l10 7-10 7z" fill="currentColor" stroke="none"/></svg>',check:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>',close:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',back:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H7m5-6l-6 6 6 6"/></svg>',moon:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',sun:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',arrow:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6l6 6-6 6"/></svg>'};
+const ICON={cup:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 9h1.5a2.5 2.5 0 0 1 0 5H16"/></svg>',minus:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>',plus:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>',bag:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8h13l-1.2 12H6.7z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',chat:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H10l-6 4z"/></svg>',mark:'<svg class="ic mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l10 7-10 7z" fill="currentColor" stroke="none"/></svg>',check:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>',close:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',back:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H7m5-6l-6 6 6 6"/></svg>',moon:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',sun:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',arrow:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-6l6 6-6 6"/></svg>'};
 let fx = {}, cupScale = 1, flying = false, seatsShown = null, cartCount = 0, OPT = null, svgSerial = 0, messages = [], historyStack = [], lastSnapshot = null, currentStage = null, editIndex = null, draftCache = new Map();
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone = o => JSON.parse(JSON.stringify(o));
@@ -136,9 +136,13 @@ function taste(){const ok=i=>!i.sold_out&&(!S.less||lessOk(i))&&(!S.nomilk||!mil
  const slot=box('fmap');B.append(slot);
  const cs=box('cats');
  CATS.forEach(c=>{const n=drinks.filter(i=>ok(i)&&catOf(i)===c).length;cs.append(btn('cat',`<span class="dot" style="background:${color(c)}"></span><span><b>${LABELS[c]}</b><br><small>${CAT[c][1]}</small></span><small>${n}</small>`,()=>{S.cat=c;S.situ=null;decide();goPicks();},{disabled:!n}));});
- const more=box('chips taste-more'),flt=(on,label,flip)=>{const b=btn('chip less'+(on?' on':''),(on?ICON.mark:'')+label,()=>{flip();show();});b.setAttribute('aria-pressed',String(on));return b;};
- more.append(box('lbl','거르기'),flt(S.less,'덜 달게',()=>S.less=!S.less),flt(S.nomilk,'우유 빼고',()=>S.nomilk=!S.nomilk),box('lbl','상황으로'));
- ['운동 직전이에요','저녁이라 카페인 없이','기분이 꿀꿀해요','처음이에요'].forEach(x=>more.append(btn('chip',x,()=>hear(x))));
+ const flt=(on,label,flip)=>{const b=btn('chip less'+(on?' on':''),(on?ICON.mark:'')+label,()=>{flip();show();});b.setAttribute('aria-pressed',String(on));return b;};
+ // 상황 칩은 '예시'일 뿐: 다른 상황은 대화창에서 직접 말한다
+ const row=(label,kids)=>{const r=box('taste-row'),c=box('chips');r.append(box('lbl',label));c.append(...kids);r.append(c);return r;};
+ const more=box('taste-more');
+ more.append(row('거르기',[flt(S.less,'덜 달게',()=>S.less=!S.less),flt(S.nomilk,'우유 빼고',()=>S.nomilk=!S.nomilk)]),
+  row('상황 예시',['운동 직전이에요','저녁이라 카페인 없이','기분이 꿀꿀해요','처음이에요'].map(x=>btn('chip',x,()=>hear(x)))),
+  box('taste-hint',ICON.chat+'<span>다른 상황은 아래 입력창에 편하게 말해 주세요. 예: “목말라요”, “밤새 공부해요”</span>'));
  B.append(cs,more);const map=flavorMap({focus:drinks.filter(ok).map(i=>i.id),room:roomLeft()});slot.replaceWith(map);
  cs.querySelectorAll('.cat').forEach((b,k)=>{b.onpointerenter=()=>map.querySelectorAll('.pin').forEach(p=>p.classList.toggle('lit',p.dataset.cat===CATS[k]));b.onpointerleave=()=>map.querySelectorAll('.lit').forEach(p=>p.classList.remove('lit'));});}
 function picks(){const p=S.pool.slice(S.page*3,S.page*3+3);
@@ -165,7 +169,7 @@ const MEASURE=document.createElement('canvas').getContext('2d');
 function textW(t,px,letter=false){MEASURE.font=letter?`500 ${px}px "Gmarket Sans",Pretendard,system-ui,sans-serif`:`600 ${px}px Pretendard,"Apple SD Gothic Neo",system-ui,sans-serif`;return MEASURE.measureText(t).width;}
 function flavorMap({focus=null,numbered=[],compact=false,room=0}={}){
  const pad=parseFloat(getComputedStyle(B).paddingLeft)||0,W=Math.round(Math.max(300,Math.min(760,B.clientWidth-pad*2))),narrow=W<520;
- const H=Math.round(narrow?(compact?240:420):compact?Math.max(200,Math.min(340,room)):Math.max(280,Math.min(W*.62,room)));
+ const H=Math.round(narrow?(compact?240:420):compact?Math.max(200,Math.min(340,room)):Math.max(220,Math.min(W*.62,room)));
  const L=narrow?36:46,R=W-(narrow?28:32),T=14,Bt=H-(compact?14:30),cw=(R-L)/6,ch=(Bt-T)/6,cx=L+3*cw,cy=T+3*ch,X=v=>L+(v+.5)*cw,Y=v=>Bt-(v+.5)*ch;
  const fs=narrow?11:12.5,lh=narrow?18:21,id='fm'+(++svgSerial),list=drinks.filter(i=>!i.sold_out),pos={},groups={};
  list.forEach(i=>{const k=i.taste['단맛']+','+i.taste['진함'];(groups[k]=groups[k]||[]).push(i);});
@@ -246,13 +250,15 @@ function flyToCart(g){const a=g.getBoundingClientRect(),t=$('#cartBtn').getBound
  const anim=g.animate([{transform:'translate(0,0) scale(1) rotate(0)',opacity:1},{transform:`translate(${dx*.45}px,${dy*.45-90}px) scale(.62) rotate(-8deg)`,opacity:1,offset:.45},{transform:`translate(${dx}px,${dy}px) scale(.12) rotate(6deg)`,opacity:.7}],{duration:720,easing:'cubic-bezier(.45,0,.3,1)'});
  anim.onfinish=()=>{g.remove();flying=false;const cb=$('#cartBtn');cb.classList.remove('bump','catch');void cb.offsetWidth;cb.classList.add('bump','catch');};}
 function addLine(i,c,qty=1,quiet=false){const line={i,c:clone(c),qty,price:priceOf(i,c)};if(editIndex!==null&&S.cart[editIndex]){line.qty=S.cart[editIndex].qty;S.cart[editIndex]=line;editIndex=null;}else S.cart.push(line);if(!quiet){S.stage='cart';show();say('담았어요. 추가하실 메뉴 있으신가요?');}}
-function cart(){const total=S.cart.reduce((a,l)=>a+l.price*l.qty,0);say(S.cart.length?'담은 메뉴를 확인해 주세요. 메뉴를 누르면 다시 고칠 수 있어요.':'아직 담은 메뉴가 없어요.');
+// 포장인지 매장인지는 담은 메뉴 위에 늘 보여 준다(포장은 실링, 매장은 컵이 달라져서)
+const orderType=()=>S.where?box('order-type',(S.where==='포장'?ICON.bag+'<b>포장 주문</b><span>들고 가기 편하게 준비해요</span>':ICON.cup+'<b>매장 주문</b><span>매장에서 드실 잔으로 준비해요</span>')):null;
+function cart(){const total=S.cart.reduce((a,l)=>a+l.price*l.qty,0);say(S.cart.length?'담은 메뉴를 확인해 주세요. 메뉴를 누르면 다시 고칠 수 있어요.':'아직 담은 메뉴가 없어요.');if(S.cart.length&&orderType())B.append(orderType());
  S.cart.forEach((l,k)=>{const el=box('line');
   el.append(btn('line-edit',`${drinkSvg(l.i,l.c,true)}<span><b>${esc(l.i.name)}</b><small>${l.i.category==='디저트'?'단품':l.c.size+' '+(l.c.temp||'')} · ${diffText(l.i,l.c)}</small><span class="edit-hint">바꾸기</span></span>`,()=>{editIndex=k;S.item=l.i;S.cfg=clone(l.c);S.stage='cup';show();},{ariaLabel:l.i.name+' 옵션 바꾸기'}));
   const st=box('step');st.append(btn('',ICON.minus,()=>{if(l.qty>1){l.qty--;show();}},{ariaLabel:l.i.name+' 한 잔 빼기',disabled:l.qty<=1}),box('qty',String(l.qty)),btn('',ICON.plus,()=>{if(l.qty<20){l.qty++;show();}},{ariaLabel:l.i.name+' 한 잔 더',disabled:l.qty>=20}));
   el.append(st,box('pr',won(l.price*l.qty)),btn('del',ICON.close,()=>{S.cart.splice(k,1);show();},{ariaLabel:l.i.name+' 빼기'}));B.append(el);});
  B.append(box('total',`<span>합계</span><b>${won(total)}</b>`));const r=box('row2');r.append(btn('ghost','더 주문할게요',()=>{editIndex=null;S.cat=S.situ=null;S.less=false;S.nomilk=false;S.stage='fork';show();}),btn('go','결제할게요',()=>{if(!S.cart.length)return;S.stage='pay';show();},{disabled:!S.cart.length}));B.append(r);}
-function pay(){say('어떻게 결제하시겠어요?');B.append(box('total',`<span>결제 금액</span><b>${won(S.cart.reduce((a,l)=>a+l.price*l.qty,0))}</b>`));for(const name of ['카드','QR','쿠폰'])B.append(btn('big',`<b>${name}</b><span>${name==='쿠폰'?'쿠폰은 한 번에 한 장만 사용할 수 있어요.':'간편하게 결제해요.'}</span>`,()=>finishPayment(name)));B.append(box('action-note','결제 과정은 시연용이에요. 실제로 청구되지 않아요.'));}
+function pay(){say('어떻게 결제하시겠어요?');if(orderType())B.append(orderType());B.append(box('total',`<span>결제 금액</span><b>${won(S.cart.reduce((a,l)=>a+l.price*l.qty,0))}</b>`));for(const name of ['카드','QR','쿠폰'])B.append(btn('big',`<b>${name}</b><span>${name==='쿠폰'?'쿠폰은 한 번에 한 장만 사용할 수 있어요.':'간편하게 결제해요.'}</span>`,()=>finishPayment(name)));B.append(box('action-note','결제 과정은 시연용이에요. 실제로 청구되지 않아요.'));}
 const SEATS0=D.seats,QUEUE0=D.store.queue_drinks,waitOf=q=>Math.max(1,Math.round(q*.4));
 // 시연용 시계: 30초마다 음료 한 잔이 나가고, 90초마다 자리 하나가 빈다
 setInterval(()=>{if(D.store.queue_drinks>QUEUE0){D.store.queue_drinks--;D.wait=waitOf(D.store.queue_drinks);if(S.stage==='where'&&!rendering)$('.board-wait')&&($('.board-wait').textContent=`대기 ${D.store.queue_drinks}잔 · 약 ${D.wait}분`);}},30000);
